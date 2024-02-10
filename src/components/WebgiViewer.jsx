@@ -5,7 +5,7 @@ import {
   TonemapPlugin,
   GBufferPlugin,
   ProgressivePlugin,
-  GammaCorrectionPlugin, // Add GammaCorrectionPlugin here
+  GammaCorrectionPlugin,
   SSRPlugin,
   SSAOPlugin,
   BloomPlugin,
@@ -13,8 +13,9 @@ import {
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { scrollAnimation } from "../lib/scroll-animation"; // Ensure correct path to your scroll animation function
+gsap.registerPlugin(ScrollTrigger);
 
-gsap.registerPlugin(ScrollTrigger)
 export default function WebgiViewer() {
   const canvasRef = useRef(null);
 
@@ -25,10 +26,11 @@ export default function WebgiViewer() {
     });
 
     const manager = await viewer.addPlugin(AssetManagerPlugin);
-    // adding the plugins individ ually
     const camera = viewer.scene.activeCamera;
     const position = camera.position;
     const target = camera.target;
+
+    // Add plugins
     await viewer.addPlugin(GBufferPlugin);
     await viewer.addPlugin(new ProgressivePlugin(32));
     await viewer.addPlugin(new TonemapPlugin(true));
@@ -43,16 +45,22 @@ export default function WebgiViewer() {
     // Configure TonemapPlugin
     viewer.getPlugin(TonemapPlugin).config.clipBackground = true;
 
-    viewer.scene.activeCamera.setCameraOptions({ controlsEnabled: false });
-    window.scrollTo(0, 0);
-    let needsUpdate = true
+    // Event listener for preFrame
+    let needsUpdate = true;
+    const onUpdate = () => {
+      needsUpdate = true;
+    };
+
     viewer.addEventListener("preFrame", () => {
-        if (needsUpdate) {
-            
-            camera.positionTargetUpdated(true);
-            needsUpdate= false
-        }
+      if (needsUpdate) {
+        camera.positionTargetUpdated(true);
+        viewer.setDirty(); // Update the viewer after modifying camera properties
+        needsUpdate = false;
+      }
     });
+
+    // Scroll animation
+    scrollAnimation(position, target, onUpdate); // Ensure scrollAnimation function is correctly defined and implemented
   }, []);
 
   useEffect(() => {
