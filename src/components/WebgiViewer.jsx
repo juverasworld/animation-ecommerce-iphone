@@ -1,4 +1,10 @@
-import React, { useRef, useCallback, useEffect } from "react";
+import React, {
+  useRef,
+  useImperativeHandle,
+  useCallback,
+  forwardRef,
+  useEffect,
+} from "react";
 import {
   ViewerApp,
   AssetManagerPlugin,
@@ -9,6 +15,7 @@ import {
   SSRPlugin,
   SSAOPlugin,
   BloomPlugin,
+  mobileAndTabletCheck,
 } from "webgi";
 
 import gsap from "gsap";
@@ -18,6 +25,13 @@ gsap.registerPlugin(ScrollTrigger);
 
 export default function WebgiViewer() {
   const canvasRef = useRef(null);
+const memoizedScrollAnimation = useCallback(
+(position, target, onUpdate)=>{
+if (position && target && onUpdate) {
+  scrollAnimation(position, target, onUpdate);
+}
+}, []
+)
 
   const setupViewer = useCallback(async () => {
     // Initialize the viewer
@@ -40,35 +54,40 @@ export default function WebgiViewer() {
     await viewer.addPlugin(BloomPlugin);
 
     viewer.renderer.refreshPipeline();
+
     await manager.addFromPath("scene-black.glb");
 
-    // Configure TonemapPlugin
     viewer.getPlugin(TonemapPlugin).config.clipBackground = true;
 
-    // Event listener for preFrame
-    let needsUpdate = true;
-    const onUpdate = () => {
-      needsUpdate = true;
-    };
 
-    viewer.addEventListener("preFrame", () => {
+    viewer.scene.activeCamera.setCameraOptions({controlsEnabled:false})
+
+    window.scrollTo(0,0);
+
+    let needsUpdate = true;
+    const onUpdate =()=>{
+      needsUpdate= true;
+      viewer.setDirty()
+    }
+
+    viewer.addEventListener("preFrame", ()=>{
       if (needsUpdate) {
+        
         camera.positionTargetUpdated(true);
-        viewer.setDirty(); // Update the viewer after modifying camera properties
         needsUpdate = false;
       }
     });
+  memoizedScrollAnimation(position, target, onUpdate);
 
-    // Scroll animation
-    scrollAnimation(position, target, onUpdate); // Ensure scrollAnimation function is correctly defined and implemented
   }, []);
 
   useEffect(() => {
-    setupViewer();
-  }, []);
+    setupViewer(); // Call setupViewer when the component mounts
+  }, []); // Empty dependency array ensures setupViewer is only called once when the component mounts
 
   return (
     <div id="webgi-canvas-container" className="">
+      {/* Assign canvasRef to the canvas element */}
       <canvas id="webgi-canvas" ref={canvasRef} />
     </div>
   );

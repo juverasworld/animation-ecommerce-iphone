@@ -1,9 +1,6 @@
 import logo from "../assets/images/logo.svg";
-import Search from "../assets/images/search.svg"
-import Store from "../assets/images/store.svg"
-
-
-
+import Search from "../assets/images/search.svg";
+import Store from "../assets/images/store.svg";
 
 export default function Navbar() {
   return (
@@ -66,10 +63,10 @@ export default function Navbar() {
             </li>
             <li>
               {" "}
-              <img src={Search} alt="store" className="" />
+              <img src={Search} alt="search" className="" />
             </li>
             <li>
-              <img src={Store} alt="apple" className="" />
+              <img src={Store} alt="store" className="" />
             </li>
           </ul>
         </div>
