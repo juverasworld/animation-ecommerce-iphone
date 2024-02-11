@@ -30,9 +30,11 @@ const WebgiViewer = forwardRef((props, ref) => {
   const [cameraRef, setupCameraRef] = useState(null);
   const [positionRef, setupPositionRef] = useState(null);
   const canvasContainerRef = useRef(null);
+  const [previewMode, setPreviewMode] = useState(false);
 
   useImperativeHandle(ref, () => ({
     triggerPreview() {
+      setPreviewMode(true);
       canvasContainerRef.current.style.pointerEvents = "all";
       props.contentRef.current.style.opacity = "0";
 
@@ -53,7 +55,7 @@ const WebgiViewer = forwardRef((props, ref) => {
         duration: 2,
       });
 
-      viewerRef.scene.activeCamera.setCameraOptions({controlsEnabled: true})
+      viewerRef.scene.activeCamera.setCameraOptions({controlsEnabled: true });
     },
   }));
   const memoizedScrollAnimation = useCallback((position, target, onUpdate) => {
@@ -114,10 +116,55 @@ const WebgiViewer = forwardRef((props, ref) => {
     setupViewer(); // Call setupViewer when the component mounts
   }, []); // Empty dependency array ensures setupViewer is only called once when the component mounts
 
+  const handleExit = useCallback(() => {
+    canvasContainerRef.current.style.pointerEvents = "none";
+    props.contentRef.current.style.opacity = "1";
+    viewer.scene.activeCamera.setCameraOptions({ controlsEnabled: false });
+
+    setPreviewMode(false);
+
+    gsap
+      .to(positionRef, {
+        x: 1.56,
+        y: 5.0,
+        z: 0.01,
+        scrollTrigger: {
+          trigger: ".display-section",
+          start: "top bottom",
+          end: "top top",
+          scrub: 2,
+          immediateRender: false,
+        },
+        onUpdate: () => {
+          viewerRef.setDirty();
+          cameraRef.positionTargetUpdated(true);
+        },
+      })
+
+      gsap.to(targetRef, {
+        x: -0.55,
+        y: 0.32,
+        z: 0.0,
+        scrollTrigger: {
+          trigger: ".display-section",
+          start: "top bottom",
+          end: "top top",
+          scrub: 2,
+          immediateRender: false,
+        },
+      });
+  }, [canvasContainerRef, viewerRef, cameraRef, positionRef, targetRef]);
+
   return (
     <div ref={canvasContainerRef} id="webgi-canvas-container" className="">
       {/* Assign canvasRef to the canvas element */}
       <canvas id="webgi-canvas" ref={canvasRef} />
+      {previewMode && (
+        <button className="button" onClick={handleExit}>
+          {" "}
+          Exit
+        </button>
+      )}
     </div>
   );
 });
