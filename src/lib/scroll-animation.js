@@ -1,6 +1,5 @@
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger"; // Import ScrollTrigger separately if you're using GSAP version 3 or above
- 
 
 gsap.registerPlugin(ScrollTrigger); // Register the ScrollTrigger plugin
 
